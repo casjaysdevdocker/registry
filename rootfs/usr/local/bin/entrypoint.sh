@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-##@Version           :  202302262042-git
+##@Version           :  202302270213-git
 # @@Author           :  Jason Hempstead
 # @@Contact          :  jason@casjaysdev.com
 # @@License          :  WTFPL
 # @@ReadME           :  entrypoint.sh --help
 # @@Copyright        :  Copyright: (c) 2023 Jason Hempstead, Casjays Developments
-# @@Created          :  Sunday, Feb 26, 2023 20:42 EST
+# @@Created          :  Monday, Feb 27, 2023 02:13 EST
 # @@File             :  entrypoint.sh
 # @@Description      :  entrypoint point for registry
 # @@Changelog        :  New script

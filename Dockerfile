@@ -2,7 +2,7 @@
 ARG LICENSE="MIT"
 ARG IMAGE_NAME="registry"
 ARG PHP_SERVER="registry"
-ARG BUILD_DATE="Sun Feb 26 08:42:22 PM EST 2023"
+ARG BUILD_DATE="Mon Feb 27 02:13:11 AM EST 2023"
 ARG LANGUAGE="en_US.UTF-8"
 ARG TIMEZONE="America/New_York"
 ARG DEFAULT_DATA_DIR="/usr/local/share/template-files/data"
@@ -10,7 +10,7 @@ ARG DEFAULT_CONF_DIR="/usr/local/share/template-files/config"
 ARG DEFAULT_TEMPLATE_DIR="/usr/local/share/template-files/defaults"
 
 ARG SERVICE_PORT="5000"
-ARG EXPOSE_PORTS="5000 5001"
+ARG EXPOSE_PORTS="5000"
 ARG PHP_VERSION="system"
 ARG NODE_VERSION="system"
 ARG NODE_MANAGER="system"
@@ -70,7 +70,7 @@ RUN set -ex; \
   apk update --update-cache && apk add --no-cache ${PACK_LIST}
 
 RUN mkdir -p "/config/registry" "/data/registry" ; \
-  [ -d  "/etc/docker-registry" ] && rm -Rf "/etc/docker-registry" ; \
+  [ -d "/etc/docker-registry" ] && rm -Rf "/etc/docker-registry" ; \
   ln -sf "/data/registry" "/var/lib/registry" ; \
   ln -sf "/config/registry" "/etc/docker-registry" 
 
@@ -155,7 +155,7 @@ COPY --from=build /. /
 
 VOLUME [ "/config","/data" ]
 
-EXPOSE ${EXPOSE_PORTS}
+EXPOSE $EXPOSE_PORTS
 
 #CMD [ "" ]
 ENTRYPOINT [ "tini", "-p", "SIGTERM", "--", "/usr/local/bin/entrypoint.sh" ]
