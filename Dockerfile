@@ -2,7 +2,7 @@
 ARG LICENSE="MIT"
 ARG IMAGE_NAME="registry"
 ARG PHP_SERVER="registry"
-ARG BUILD_DATE="Mon Feb 27 02:13:11 AM EST 2023"
+ARG BUILD_DATE="Mon Feb 27 02:57:37 AM EST 2023"
 ARG LANGUAGE="en_US.UTF-8"
 ARG TIMEZONE="America/New_York"
 ARG DEFAULT_DATA_DIR="/usr/local/share/template-files/data"
@@ -22,7 +22,7 @@ ARG IMAGE_VERSION="${DISTRO_VERSION}"
 ARG BUILD_VERSION="${DISTRO_VERSION}"
 ARG IMAGE_REPO="${IMAGE_REPO}"
 
-FROM alpine:${IMAGE_VERSION} AS build
+FROM casjaysdevdocker/alpine:${IMAGE_VERSION} AS build
 ARG USER
 ARG LICENSE
 ARG TIMEZONE
@@ -72,7 +72,8 @@ RUN set -ex; \
 RUN mkdir -p "/config/registry" "/data/registry" ; \
   [ -d "/etc/docker-registry" ] && rm -Rf "/etc/docker-registry" ; \
   ln -sf "/data/registry" "/var/lib/registry" ; \
-  ln -sf "/config/registry" "/etc/docker-registry" 
+  ln -sf "/config/registry" "/etc/docker-registry" ; \
+  ln -sf "$(type -P docker-registry)" "/usr/local/bin/registry"
 
 RUN echo "$TIMEZONE" >"/etc/timezone" ; \
   touch "/etc/profile" "/root/.profile" ; \

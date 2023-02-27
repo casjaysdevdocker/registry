@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-##@Version           :  202302270213-git
+##@Version           :  202302270257-git
 # @@Author           :  Jason Hempstead
 # @@Contact          :  jason@casjaysdev.com
 # @@License          :  WTFPL
 # @@ReadME           :  start-registry.sh --help
 # @@Copyright        :  Copyright: (c) 2023 Jason Hempstead, Casjays Developments
-# @@Created          :  Monday, Feb 27, 2023 02:13 EST
+# @@Created          :  Monday, Feb 27, 2023 02:57 EST
 # @@File             :  start-registry.sh
 # @@Description      :  script to start registry
 # @@Changelog        :  New script
@@ -162,7 +162,7 @@ fi
 [ -d "$BACKUP_DIR" ] || mkdir -p "$BACKUP_DIR"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Post copy commands
-[ -f "/config/registry/config.yml" ] && [ -n "$PORT" ] && sed 's|addr:.*|addr: 0.0.0.0:'$PORT'|g' "/config/registry/config.yml"
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Initialized
 [ -d "/data" ] && touch "/data/.docker_has_run"
@@ -174,6 +174,7 @@ fi
 [ -f "/config/.env.sh" ] && . "/config/.env.sh"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Actions based on env
+[ -f "/config/registry/config.yml" ] && [ -n "$PORT" ] && sed -i 's|addr:.*|addr: 0.0.0.0:'$PORT'|g' "/config/registry/config.yml"
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Change to working dir

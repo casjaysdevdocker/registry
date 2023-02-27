@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-##@Version           :  202302270213-git
+##@Version           :  202302270257-git
 # @@Author           :  Jason Hempstead
 # @@Contact          :  jason@casjaysdev.com
 # @@License          :  WTFPL
 # @@ReadME           :  entrypoint.sh --help
 # @@Copyright        :  Copyright: (c) 2023 Jason Hempstead, Casjays Developments
-# @@Created          :  Monday, Feb 27, 2023 02:13 EST
+# @@Created          :  Monday, Feb 27, 2023 02:57 EST
 # @@File             :  entrypoint.sh
 # @@Description      :  entrypoint point for registry
 # @@Changelog        :  New script
@@ -76,8 +76,29 @@ __heath_check() {
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __start_all_services() {
-  start-registry.sh
-  return $?
+  local serviceStatus=0
+  while :; do __garbage_collection; done &
+  start-registry.sh &
+  serviceStatus=$(($? + serviceStatus))
+  return $serviceStatus
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+__garbage_collection() {
+  trap 'rm -Rf /tmp/collector.pid' EXIT ERR
+  local garbageStatus=0
+  local run_interval=$((60 * 60 * COLLECTION_TIME))
+  if [ -f "/config/registry/config.yml" ] && [ ! -f "/tmp/collector.pid" ]; then
+    if registry garbage-collect --dry-run --delete-untagged "/config/registry/config.yml"; then
+      touch "/tmp/collector.pid"
+      registry garbage-collect --delete-untagged "/config/registry/config.yml"
+      garbageStatus=0
+    else
+      garbageStatus=1
+    fi
+    sleep $run_interval
+    rm -Rf touch "/tmp/collector.pid"
+  fi
+  return $garbageStatus
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Additional functions
@@ -91,11 +112,13 @@ export -f __start_all_services __get_ip4 __get_ip6
 USER="${USER:-root}"
 DISPLAY="${DISPLAY:-}"
 LANG="${LANG:-C.UTF-8}"
+ENV_PORTS="${ENV_PORTS:-}"
 DOMAINNAME="${DOMAINNAME:-}"
 TZ="${TZ:-America/New_York}"
 PHP_VERSION="${PHP_VERSION//php/}"
 SERVICE_USER="${SERVICE_USER:-root}"
 SERVICE_PORT="${SERVICE_PORT:-$PORT}"
+COLLECTION_TIME="${COLLECTION_TIME:-4}"
 HOSTNAME="${HOSTNAME:-casjaysdev-registry}"
 HOSTADMIN="${HOSTADMIN:-root@${DOMAINNAME:-$HOSTNAME}}"
 CERT_BOT_MAIL="${CERT_BOT_MAIL:-certbot-mail@casjay.net}"
@@ -116,7 +139,7 @@ CONTAINER_IP6_ADDRESS="$(__get_ip6)"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Additional variables and variable overrides
 SERVICE_NAME="registry"
-SERVICES_LIST="docker-registry "
+SERVICES_LIST="registry "
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Show start message
 ENTRYPOINT_MESSAGE="false"
@@ -285,8 +308,16 @@ if [ -d "$DEFAULT_DATA_DIR/htdocs/www" ] && [ ! -d "$WWW_ROOT_DIR" ]; then
   [ -f "$WWW_ROOT_DIR/htdocs/www/server-health" ] || echo "OK" >"$WWW_ROOT_DIR/htdocs/www/server-health"
 fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Show configured listing proccesses
+if [ -n "$ENV_PORTS" ]; then
+  echo "The following ports are open"
+  for a in $ENV_PORTS; do
+    echo "$a"
+  done
+fi
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Unset unneeded variables
-unset SET_USR_BIN create_bin create_bin_name create_template create_template_name
+unset a SET_USR_BIN create_bin create_bin_name create_template create_template_name
 unset create_data create_data_name create_config create_config_name create_conf create_conf_name
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 [ -f "/data/.docker_has_run" ] || { [ -d "/data" ] && echo "Initialized on: $(date)" >"/data/.docker_has_run"; }
