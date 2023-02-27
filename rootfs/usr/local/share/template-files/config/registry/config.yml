@@ -130,7 +130,7 @@ health:
 ################
 compatibility:
   schema1:
-    # signingkeyfile: /etc/registry/key.json
+    # signingkeyfile: /config/registry/key.json
     enabled: true
 ################
 # validation:

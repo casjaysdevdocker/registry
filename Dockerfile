@@ -16,13 +16,13 @@ ARG NODE_VERSION="system"
 ARG NODE_MANAGER="system"
 
 ARG USER="root"
-ARG DISTRO_VERSION="3.17"
+ARG DISTRO_VERSION="edge"
 ARG CONTAINER_VERSION="latest"
 ARG IMAGE_VERSION="${DISTRO_VERSION}"
 ARG BUILD_VERSION="${DISTRO_VERSION}"
 ARG IMAGE_REPO="${IMAGE_REPO}"
 
-FROM casjaysdevdocker/alpine:${IMAGE_VERSION} AS build
+FROM alpine:${IMAGE_VERSION} AS build
 ARG USER
 ARG LICENSE
 ARG TIMEZONE
@@ -43,7 +43,7 @@ ARG PHP_VERSION
 
 ARG PACK_LIST="bash bash-completion iproute2 ssmtp openssl wget curl jq ca-certificates \
   tzdata mailcap git ncurses util-linux pciutils usbutils coreutils binutils findutils grep \
-  iproute2 sudo rsync zip certbot tini"
+  iproute2 sudo rsync zip certbot tini docker-registry apache2-utils"
 
 ENV ENV=~/.bashrc
 ENV SHELL="/bin/sh"
