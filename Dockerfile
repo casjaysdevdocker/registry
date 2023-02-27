@@ -69,7 +69,8 @@ RUN set -ex; \
   if [ "${DISTRO_VERSION}" = "edge" ]; then echo "http://dl-cdn.alpinelinux.org/alpine/${DISTRO_VERSION}/testing" >>"/etc/apk/repositories" ; fi ; \
   apk update --update-cache && apk add --no-cache ${PACK_LIST}
 
-RUN ln -sf "/etc/docker-registry" "/config/registry" ; \
+RUN mkdir -p "/config/registry" "/data/registry" ; \
+  ln -sf "/etc/docker-registry" "/config/registry" ; \
   ls -sf "/var/lib/registry" "/data/registry"
 
 RUN echo "$TIMEZONE" >"/etc/timezone" ; \
