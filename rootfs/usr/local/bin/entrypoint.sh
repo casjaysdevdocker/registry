@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-##@Version           :  202302281653-git
+##@Version           :  202302281812-git
 # @@Author           :  Jason Hempstead
 # @@Contact          :  jason@casjaysdev.com
 # @@License          :  WTFPL
 # @@ReadME           :  entrypoint.sh --help
 # @@Copyright        :  Copyright: (c) 2023 Jason Hempstead, Casjays Developments
-# @@Created          :  Tuesday, Feb 28, 2023 16:53 EST
+# @@Created          :  Tuesday, Feb 28, 2023 18:12 EST
 # @@File             :  entrypoint.sh
 # @@Description      :  entrypoint point for registry
 # @@Changelog        :  New script
 # @@TODO             :  Better documentation
-# @@Other            :
-# @@Resource         :
+# @@Other            :  
+# @@Resource         :  
 # @@Terminal App     :  no
 # @@sudo/root        :  no
 # @@Template         :  other/docker-entrypoint
@@ -103,7 +103,8 @@ WEB_SERVER_PORTS="${WEB_SERVER_PORTS:-}"
 SERVICES_LIST="${PROCS_LIST:-$SERVICES_LIST} "
 FULL_DOMAIN_NAME="${FULL_DOMAIN_NAME:-$DOMAINNAME}"
 HOSTNAME="${HOSTNAME:-casjaysdev-registry}"
-HOSTADMIN="${HOSTADMIN:-root@${DOMAINNAME:-$HOSTNAME}}"
+HOSTADMIN="${HOSTADMIN:-root@${EMAIL_DOMAIN:-$DOMAINNAME}}"
+EMAIL_RELAY="${EMAIL_RELAY:-}"
 CERT_BOT_MAIL="${CERT_BOT_MAIL:-certbot-mail@casjay.net}"
 SSL_CERT_BOT="${SSL_CERT_BOT:-false}"
 SSL_ENABLED="${SSL_ENABLED:-false}"
