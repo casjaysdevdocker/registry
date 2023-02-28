@@ -43,7 +43,7 @@ ARG PHP_VERSION
 
 ARG PACK_LIST="bash bash-completion iproute2 ssmtp openssl wget curl jq ca-certificates \
   tzdata mailcap git ncurses util-linux pciutils usbutils coreutils binutils findutils grep \
-  iproute2 sudo rsync zip certbot tini"
+  iproute2 sudo rsync zip certbot tini docker-registry"
 
 ENV ENV=~/.bashrc
 ENV SHELL="/bin/sh"
