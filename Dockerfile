@@ -87,7 +87,7 @@ RUN echo "$TIMEZONE" >"/etc/timezone" ; \
   grep -q 'alias quit' "/root/.bashrc" || printf '# Profile\n\n%s\n%s\n%s\n' '. /etc/profile' '. /root/.profile' "alias quit='exit 0 2>/dev/null'" >>"/root/.bashrc"
 
 RUN echo 'Running cleanup' ; \
-  rm -Rf "/config" "/data" ; \\
+  rm -Rf "/config" "/data" ; \
   rm -rf /etc/systemd/system/*.wants/* ; \
   rm -rf /lib/systemd/system/systemd-update-utmp* ; \
   rm -rf /lib/systemd/system/local-fs.target.wants/* ; \
