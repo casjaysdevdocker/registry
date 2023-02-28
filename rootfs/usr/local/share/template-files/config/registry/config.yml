@@ -107,7 +107,7 @@ health:
     interval: 10s
     threshold: 3
   file:
-    - file: /config/registry/configuration.yaml
+    - file: /config/registry/config.yml
       interval: 60s
   # http:
   #   - uri: http://server.to.check/must/return/200

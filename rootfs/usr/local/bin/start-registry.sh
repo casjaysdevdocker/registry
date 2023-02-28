@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-##@Version           :  202302270257-git
+##@Version           :  202302280001-git
 # @@Author           :  Jason Hempstead
 # @@Contact          :  jason@casjaysdev.com
 # @@License          :  WTFPL
 # @@ReadME           :  start-registry.sh --help
 # @@Copyright        :  Copyright: (c) 2023 Jason Hempstead, Casjays Developments
-# @@Created          :  Monday, Feb 27, 2023 02:57 EST
+# @@Created          :  Tuesday, Feb 28, 2023 00:01 EST
 # @@File             :  start-registry.sh
 # @@Description      :  script to start registry
 # @@Changelog        :  New script
@@ -127,7 +127,7 @@ CONTAINER_IP_ADDRESS="$(ip a 2>/dev/null | grep 'inet' | grep -v '127.0.0.1' | a
 # Overwrite variables
 WORKDIR=""
 SERVICE_PORT="$PORT"
-SERVICE_NAME="docker-registry"
+SERVICE_NAME="registry"
 SERVICE_USER="${SERVICE_USER:-root}"
 SERVICE_COMMAND="$SERVICE_NAME serve /config/registry/config.yml"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -176,7 +176,6 @@ fi
 [ -f "/config/.env.sh" ] && . "/config/.env.sh"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Actions based on env
-[ -f "/config/registry/config.yml" ] && [ -n "$PORT" ] && sed -i 's|addr:.*|addr: 0.0.0.0:'$PORT'|g' "/config/registry/config.yml"
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Change to working dir
