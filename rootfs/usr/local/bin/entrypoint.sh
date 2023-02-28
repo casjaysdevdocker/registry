@@ -19,10 +19,11 @@
 # @@Template         :  other/docker-entrypoint
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Setup trap
-trap -- 'retVal=$?;kill -9 $$;exit $retVal' SIGINT SIGTERM ERR
+trap -- 'retVal=$?;exit $retVal' SIGINT SIGTERM ERR
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set bash options
-[ "$DEBUGGER" = "on" ] && set -x
+set -o pipefail
+[ "$DEBUGGER" = "on" ] && echo "Enabling debugging" && set -x$DEBUGGER_OPTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set functions
 __exec_command() {
@@ -77,7 +78,8 @@ __heath_check() {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __start_all_services() {
   local serviceStatus=0
-  start-registry.sh
+  echo "$$" >"/tmp/entrypoint.pid"
+  start-registry.sh &
   serviceStatus=$(($? + serviceStatus))
   return $serviceStatus
 }
@@ -134,6 +136,7 @@ echo "Executing entrypoint script for $SERVICE_NAME"
 [ "$SERVICE_PORT" = "443" ] && SSL_ENABLED="true"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Check if this is a new container
+[ -f "/tmp/entrypoint.pid" ] && START_SERVICES=""
 [ -f "/data/.docker_has_run" ] && DATA_DIR_INITIALIZED="true" || DATA_DIR_INITIALIZED="false"
 [ -f "/config/.docker_has_run" ] && CONFIG_DIR_INITIALIZED="true" || CONFIG_DIR_INITIALIZED="false"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
