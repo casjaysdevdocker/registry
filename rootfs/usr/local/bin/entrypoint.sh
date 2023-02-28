@@ -104,6 +104,8 @@ __garbage_collection() {
 # Additional functions
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+while :; do [ "$1" = " " ] && shift 1 || break; done
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # export functions
 export -f __exec_command __pcheck __pgrep __find __curl __heath_check __certbot
 export -f __start_all_services __get_ip4 __get_ip6
@@ -140,6 +142,9 @@ CONTAINER_IP6_ADDRESS="$(__get_ip6)"
 # Additional variables and variable overrides
 SERVICE_NAME="registry"
 SERVICES_LIST="registry "
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Overwrite variables
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Show start message
 ENTRYPOINT_MESSAGE="false"
