@@ -1,28 +1,28 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-##@Version           :  202302280001-git
+##@Version           :  202302280133-git
 # @@Author           :  Jason Hempstead
 # @@Contact          :  jason@casjaysdev.com
 # @@License          :  WTFPL
 # @@ReadME           :  entrypoint.sh --help
 # @@Copyright        :  Copyright: (c) 2023 Jason Hempstead, Casjays Developments
-# @@Created          :  Tuesday, Feb 28, 2023 00:01 EST
+# @@Created          :  Tuesday, Feb 28, 2023 01:33 EST
 # @@File             :  entrypoint.sh
 # @@Description      :  entrypoint point for registry
 # @@Changelog        :  New script
 # @@TODO             :  Better documentation
-# @@Other            :  
-# @@Resource         :  
+# @@Other            :
+# @@Resource         :
 # @@Terminal App     :  no
 # @@sudo/root        :  no
 # @@Template         :  other/docker-entrypoint
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Setup trap
-trap 'retVal=$?;kill -9 $$;exit $retVal' SIGINT
+trap -- 'retVal=$?;kill -9 $$;exit $retVal' SIGINT SIGTERM ERR
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set bash options
-[ -n "$DEBUG" ] && set -x
+[ "$DEBUGGER" = "on" ] && set -x
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set functions
 __exec_command() {
@@ -70,14 +70,14 @@ __heath_check() {
       status=$((status + 1))
     fi
   done
-  #__curl "http://localhost:$SERVICE_PORT/server-health" || healthStatus=$((healthStatus + 1))
+  __curl "http://localhost:$SERVICE_PORT/v2/" || healthStatus=$((healthStatus + 1))
   [ "$healthStatus" -eq 0 ] || health="Errors reported see docker logs --follow $CONTAINER_NAME"
   return $healthStatus
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __start_all_services() {
   local serviceStatus=0
-  start-registry.sh &
+  start-registry.sh
   serviceStatus=$(($? + serviceStatus))
   return $serviceStatus
 }
@@ -101,6 +101,7 @@ TZ="${TZ:-America/New_York}"
 PHP_VERSION="${PHP_VERSION//php/}"
 SERVICE_USER="${SERVICE_USER:-root}"
 SERVICE_PORT="${SERVICE_PORT:-$PORT}"
+FULL_DOMAIN_NAME="${FULL_DOMAIN_NAME:-$DOMAINNAME}"
 HOSTNAME="${HOSTNAME:-casjaysdev-registry}"
 HOSTADMIN="${HOSTADMIN:-root@${DOMAINNAME:-$HOSTNAME}}"
 CERT_BOT_MAIL="${CERT_BOT_MAIL:-certbot-mail@casjay.net}"
@@ -120,11 +121,11 @@ CONTAINER_IP_ADDRESS="$(__get_ip4)"
 CONTAINER_IP6_ADDRESS="$(__get_ip6)"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Additional variables and variable overrides
-SERVICE_NAME="registry"
-SERVICES_LIST="registry "
+SERVICE_NAME="docker-registry"
+SERVICES_LIST="docker-registry "
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Overwrite variables
-
+[ -n "$PORT" ] || PORT="5000"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Show start message
 ENTRYPOINT_MESSAGE="false"
@@ -140,7 +141,7 @@ echo "Executing entrypoint script for $SERVICE_NAME"
 export USER LANG TZ DOMAINNAME HOSTNAME HOSTADMIN SSL_ENABLED SSL_DIR SSL_CA
 export SSL_KEY SERVICE_NAME SSL_DIR LOCAL_BIN_DIR SSL_CONTAINER_DIR SSL_CERT_BOT
 export DEFAULT_CONF_DIR CONTAINER_IP_ADDRESS DISPLAY CONFIG_DIR_INITIALIZED DATA_DIR_INITIALIZED
-export SERVICE_USER ENTRYPOINT_MESSAGE PHP_VERSION SERVICES_LIST
+export SERVICE_USER ENTRYPOINT_MESSAGE PHP_VERSION SERVICES_LIST FULL_DOMAIN_NAME PORT
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # import variables from file
 [ -f "/root/env.sh" ] && . "/root/env.sh"
@@ -358,10 +359,17 @@ certbot)
   fi
   ;;
 
+start)
+  shift $#
+  __start_all_services &
+  wait -f $!
+  exit $?
+  ;;
+
 *) # Execute primary command
-  if [ $# -eq 0 ]; then
-    __start_all_services
-    exit ${exitCode:-$?}
+  if [ "$DATA_DIR_INITIALIZED" = "false" ] || [ -n "$STAR_SERVICES" ] || [ $# -eq 0 ]; then
+    exec "$0"
+    exit $?
   else
     __exec_command "$@"
     exitCode=$?

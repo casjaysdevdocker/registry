@@ -15,7 +15,7 @@ storage:
 http:
   addr: :5000
   #prefix: /my/nested/registry/
-  #host: https://myregistryaddress.org:5000
+  #host: http://myregistryaddress.org:5000
   #secret: asecretforlocaldevelopment
   relativeurls: true
   #draintimeout: 60s

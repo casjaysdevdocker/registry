@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-##@Version           :  202302280001-git
+##@Version           :  202302280133-git
 # @@Author           :  Jason Hempstead
 # @@Contact          :  jason@casjaysdev.com
 # @@License          :  WTFPL
 # @@ReadME           :  start-registry.sh --help
 # @@Copyright        :  Copyright: (c) 2023 Jason Hempstead, Casjays Developments
-# @@Created          :  Tuesday, Feb 28, 2023 00:01 EST
+# @@Created          :  Tuesday, Feb 28, 2023 01:33 EST
 # @@File             :  start-registry.sh
 # @@Description      :  script to start registry
 # @@Changelog        :  New script
@@ -19,7 +19,9 @@
 # @@Template         :  other/start-service
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set trap
-trap -- 'retVal=$?;kill -9 $$;exit $retVal' SIGINT SIGTERM ERR EXIT
+trap -- 'retVal=$?;kill -9 $$;exit $retVal' SIGINT SIGTERM ERR
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+[ "$DEBUGGER" = "on" ] && set -x
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set functions
 __cd() { [ -d "$1" ] && builtin cd "$1" || return 1; }
@@ -102,6 +104,7 @@ DOMAINNAME="${DOMAINNAME:-}"
 TZ="${TZ:-America/New_York}"
 PORT="${SERVICE_PORT:-$PORT}"
 PHP_VERSION="${PHP_VERSION//php/}"
+FULL_DOMAIN_NAME="${FULL_DOMAIN_NAME:-$DOMAINNAME}"
 HOSTNAME="${HOSTNAME:-casjaysdev-registry}"
 HOSTADMIN="${HOSTADMIN:-root@${DOMAINNAME:-$HOSTNAME}}"
 SSL_CERT_BOT="${SSL_CERT_BOT:-false}"
@@ -122,19 +125,19 @@ DEFAULT_TEMPLATE_DIR="${DEFAULT_TEMPLATE_DIR:-/usr/local/share/template-files/de
 CONTAINER_IP_ADDRESS="$(ip a 2>/dev/null | grep 'inet' | grep -v '127.0.0.1' | awk '{print $2}' | sed 's|/.*||g')"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Custom variables
-
+REGISTRY_HOST="${FULL_DOMAIN_NAME:-$HOSTNAME}"
+[ -n "$PORT" ] || PORT="5000"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Overwrite variables
 WORKDIR=""
-SERVICE_PORT="$PORT"
-SERVICE_NAME="registry"
+SERVICE_PORT=""
+SERVICE_NAME="docker-registry"
 SERVICE_USER="${SERVICE_USER:-root}"
 SERVICE_COMMAND="$SERVICE_NAME serve /config/registry/config.yml"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 [ "$SERVICE_PORT" = "443" ] && SSL_ENABLED="true"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Pre copy commands
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Check if this is a new container
 [ -z "$DATA_DIR_INITIALIZED" ] && [ -f "/data/.docker_has_run" ] && DATA_DIR_INITIALIZED="true"
@@ -176,7 +179,10 @@ fi
 [ -f "/config/.env.sh" ] && . "/config/.env.sh"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Actions based on env
-
+if [ -f "/config/registry/config.yml" ]; then
+  [ -n "$PORT" ] && sed -i 's|:5000|'$PORT'|g' "/config/registry/config.yml"
+  [ -n "$REGISTRY_HOST" ] && sed -i 's|myregistryaddress.org|'$REGISTRY_HOST'|g' "/config/registry/config.yml"
+fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Change to working dir
 [ -n "$WORKDIR" ] && __cd "$WORKDIR"

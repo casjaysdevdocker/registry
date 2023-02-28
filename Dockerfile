@@ -2,27 +2,27 @@
 ARG LICENSE="MIT"
 ARG IMAGE_NAME="registry"
 ARG PHP_SERVER="registry"
-ARG BUILD_DATE="Tue Feb 28 12:01:33 AM EST 2023"
+ARG BUILD_DATE="Tue Feb 28 01:33:36 AM EST 2023"
 ARG LANGUAGE="en_US.UTF-8"
 ARG TIMEZONE="America/New_York"
 ARG DEFAULT_DATA_DIR="/usr/local/share/template-files/data"
 ARG DEFAULT_CONF_DIR="/usr/local/share/template-files/config"
 ARG DEFAULT_TEMPLATE_DIR="/usr/local/share/template-files/defaults"
 
-ARG SERVICE_PORT=""
-ARG EXPOSE_PORTS=""
+ARG SERVICE_PORT="5000"
+ARG EXPOSE_PORTS="5000"
 ARG PHP_VERSION="system"
 ARG NODE_VERSION="system"
 ARG NODE_MANAGER="system"
 
 ARG USER="root"
-ARG DISTRO_VERSION="3.17"
+ARG DISTRO_VERSION="edge"
 ARG CONTAINER_VERSION="latest"
 ARG IMAGE_VERSION="${DISTRO_VERSION}"
 ARG BUILD_VERSION="${DISTRO_VERSION}"
 ARG IMAGE_REPO="${IMAGE_REPO}"
 
-FROM casjaysdevdocker/alpine:${IMAGE_VERSION} AS build
+FROM alpine:${IMAGE_VERSION} AS build
 ARG USER
 ARG LICENSE
 ARG TIMEZONE
@@ -69,7 +69,11 @@ RUN set -ex; \
   if [ "${DISTRO_VERSION}" = "edge" ]; then echo "http://dl-cdn.alpinelinux.org/alpine/${DISTRO_VERSION}/testing" >>"/etc/apk/repositories" ; fi ; \
   apk update --update-cache && apk add --no-cache ${PACK_LIST}
 
-RUN echo
+RUN mkdir -p "/config/registry" "/data/registry" ; \
+  [ -d "/etc/docker-registry" ] && rm -Rf "/etc/docker-registry" ; \
+  ln -sf "/data/registry" "/var/lib/registry" ; \
+  ln -sf "/config/registry" "/etc/docker-registry" ; \
+  ln -sf "$(type -P docker-registry)" "/usr/local/bin/registry"
 
 RUN echo "$TIMEZONE" >"/etc/timezone" ; \
   touch "/etc/profile" "/root/.profile" ; \
@@ -157,4 +161,3 @@ EXPOSE $EXPOSE_PORTS
 #CMD [ "" ]
 ENTRYPOINT [ "tini", "-p", "SIGTERM", "--", "/usr/local/bin/entrypoint.sh" ]
 HEALTHCHECK --start-period=1m --interval=2m --timeout=3s CMD [ "/usr/local/bin/entrypoint.sh", "healthcheck" ]
-
