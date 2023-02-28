@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-##@Version           :  202302280133-git
+##@Version           :  202302281653-git
 # @@Author           :  Jason Hempstead
 # @@Contact          :  jason@casjaysdev.com
 # @@License          :  WTFPL
 # @@ReadME           :  start-registry.sh --help
 # @@Copyright        :  Copyright: (c) 2023 Jason Hempstead, Casjays Developments
-# @@Created          :  Tuesday, Feb 28, 2023 01:33 EST
+# @@Created          :  Tuesday, Feb 28, 2023 16:53 EST
 # @@File             :  start-registry.sh
 # @@Description      :  script to start registry
 # @@Changelog        :  New script
@@ -18,11 +18,8 @@
 # @@sudo/root        :  no
 # @@Template         :  other/start-service
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Set trap
-trap 'retVal=$?;exit $retVal' SIGINT SIGTERM ERR
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-set -o pipefail
-[ "$DEBUGGER" = "on" ] && echo "Enabling debugging" && set -x$DEBUGGER_OPTIONS
+# Set bash options
+[ "$DEBUGGER" = "on" ] && echo "Enabling debugging" && set -o pipefail -x$DEBUGGER_OPTIONS || set -o pipefail
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set functions
 __cd() { [ -d "$1" ] && builtin cd "$1" || return 1; }
@@ -50,7 +47,6 @@ __exec_command() {
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __exec_service_start() {
-  [ -n "$DEBUG" ] && set -x
   local exitCode=0 cmd="${SERVICE_COMMAND:-false}"
   sleep 30
   echo "Setting up service to run as $SERVICE_USER"
@@ -77,7 +73,7 @@ __start_message() {
   if [ "$ENTRYPOINT_MESSAGE" = "false" ]; then
     echo "Starting services: $SERVICES_LIST"
   else
-    echo "Starting services: $SERVICES_LIST on: $CONTAINER_IP_ADDRESS"
+    echo "Starting services: $SERVICES_LIST on: $CONTAINER_IP4_ADDRESS"
   fi
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -103,8 +99,9 @@ DISPLAY="${DISPLAY:-}"
 LANG="${LANG:-C.UTF-8}"
 DOMAINNAME="${DOMAINNAME:-}"
 TZ="${TZ:-America/New_York}"
-PORT="${SERVICE_PORT:-$PORT}"
 PHP_VERSION="${PHP_VERSION//php/}"
+SERVICE_PORT="${SERVICE_PORT:-$PORT}"
+WEB_SERVER_PORTS="${WEB_SERVER_PORTS:-}"
 FULL_DOMAIN_NAME="${FULL_DOMAIN_NAME:-$DOMAINNAME}"
 HOSTNAME="${HOSTNAME:-casjaysdev-registry}"
 HOSTADMIN="${HOSTADMIN:-root@${DOMAINNAME:-$HOSTNAME}}"
@@ -123,22 +120,22 @@ CONFIG_DIR_INITIALIZED="${CONFIG_DIR_INITIALIZED:-}"
 DEFAULT_DATA_DIR="${DEFAULT_DATA_DIR:-/usr/local/share/template-files/data}"
 DEFAULT_CONF_DIR="${DEFAULT_CONF_DIR:-/usr/local/share/template-files/config}"
 DEFAULT_TEMPLATE_DIR="${DEFAULT_TEMPLATE_DIR:-/usr/local/share/template-files/defaults}"
-CONTAINER_IP_ADDRESS="$(ip a 2>/dev/null | grep 'inet' | grep -v '127.0.0.1' | awk '{print $2}' | sed 's|/.*||g')"
+CONTAINER_IP4_ADDRESS="${CONTAINER_IP4_ADDRESS:-$(__get_ip4)}"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Custom variables
-REGISTRY_HOST="${FULL_DOMAIN_NAME:-$HOSTNAME}"
-[ -n "$PORT" ] || PORT="5000"
+WORKDIR=""
+SERVICE_PORT="$PORT"
+SERVICE_NAME="docker-registry "
+SERVICE_USER="${SERVICE_USER:-root}"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Overwrite variables
-WORKDIR=""
-SERVICE_PORT=""
-SERVICE_NAME="docker-registry"
-SERVICE_USER="${SERVICE_USER:-root}"
 SERVICE_COMMAND="$SERVICE_NAME serve /config/registry/config.yml"
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-[ "$SERVICE_PORT" = "443" ] && SSL_ENABLED="true"
+[ "$WEB_SERVER_PORT" = "443" ] && SSL_ENABLED="true"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Pre copy commands
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Check if this is a new container
 [ -z "$DATA_DIR_INITIALIZED" ] && [ -f "/data/.docker_has_run" ] && DATA_DIR_INITIALIZED="true"
@@ -167,9 +164,6 @@ fi
 # Create the backup dir
 [ -d "$BACKUP_DIR" ] || mkdir -p "$BACKUP_DIR"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Post copy commands
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Initialized
 [ -d "/data" ] && touch "/data/.docker_has_run"
 [ -d "/config" ] && touch "/config/.docker_has_run"
@@ -177,13 +171,18 @@ fi
 # APP Variables overrides
 [ -f "/root/env.sh" ] && . "/root/env.sh"
 [ -f "/config/env.sh" ] && . "/config/env.sh"
-[ -f "/config/.env.sh" ] && . "/config/.env.sh"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Actions based on env
 if [ -f "/config/registry/config.yml" ]; then
   [ -n "$PORT" ] && sed -i 's|:5000|'$PORT'|g' "/config/registry/config.yml"
   [ -n "$REGISTRY_HOST" ] && sed -i 's|myregistryaddress.org|'$REGISTRY_HOST'|g' "/config/registry/config.yml"
 fi
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Post copy commands
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Other commands
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Change to working dir
 [ -n "$WORKDIR" ] && __cd "$WORKDIR"
@@ -193,6 +192,7 @@ case "$1" in
 backup)
   shift 1
   __run_backup "${1:-$BACKUP_DIR}"
+  exit $?
   ;;
 
 certbot)
@@ -201,26 +201,24 @@ certbot)
   if [ "$1" = "create" ]; then
     shift 1
     __certbot
+    exit $?
   elif [ "$1" = "renew" ]; then
     shift 1
     __certbot "renew certonly --force-renew"
+    exit $?
   else
     __exec_command "certbot" "$@"
+    exit $?
   fi
   ;;
 
 *)
   __exec_pre_start && __exec_service_start
+  exit $?
   ;;
 esac
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Set exit code
-exitCode="${exitCode:-$?}"
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # End application
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# lets exit with code
-exit ${exitCode:-$?}
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# end
+
 # ex: ts=2 sw=2 et filetype=sh

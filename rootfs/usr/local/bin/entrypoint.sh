@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-##@Version           :  202302280133-git
+##@Version           :  202302281653-git
 # @@Author           :  Jason Hempstead
 # @@Contact          :  jason@casjaysdev.com
 # @@License          :  WTFPL
 # @@ReadME           :  entrypoint.sh --help
 # @@Copyright        :  Copyright: (c) 2023 Jason Hempstead, Casjays Developments
-# @@Created          :  Tuesday, Feb 28, 2023 01:33 EST
+# @@Created          :  Tuesday, Feb 28, 2023 16:53 EST
 # @@File             :  entrypoint.sh
 # @@Description      :  entrypoint point for registry
 # @@Changelog        :  New script
@@ -18,12 +18,8 @@
 # @@sudo/root        :  no
 # @@Template         :  other/docker-entrypoint
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Setup trap
-trap -- 'retVal=$?;exit $retVal' SIGINT SIGTERM ERR
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set bash options
-set -o pipefail
-[ "$DEBUGGER" = "on" ] && echo "Enabling debugging" && set -x$DEBUGGER_OPTIONS
+[ "$DEBUGGER" = "on" ] && echo "Enabling debugging" && set -o pipefail -x$DEBUGGER_OPTIONS || set -o pipefail
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set functions
 __exec_command() {
@@ -71,7 +67,7 @@ __heath_check() {
       status=$((status + 1))
     fi
   done
-  __curl "http://localhost:$SERVICE_PORT/v2/" || healthStatus=$((healthStatus + 1))
+  #__curl "http://localhost:$SERVICE_PORT/server-health" || healthStatus=$((healthStatus + 1))
   [ "$healthStatus" -eq 0 ] || health="Errors reported see docker logs --follow $CONTAINER_NAME"
   return $healthStatus
 }
@@ -103,6 +99,8 @@ TZ="${TZ:-America/New_York}"
 PHP_VERSION="${PHP_VERSION//php/}"
 SERVICE_USER="${SERVICE_USER:-root}"
 SERVICE_PORT="${SERVICE_PORT:-$PORT}"
+WEB_SERVER_PORTS="${WEB_SERVER_PORTS:-}"
+SERVICES_LIST="${PROCS_LIST:-$SERVICES_LIST} "
 FULL_DOMAIN_NAME="${FULL_DOMAIN_NAME:-$DOMAINNAME}"
 HOSTNAME="${HOSTNAME:-casjaysdev-registry}"
 HOSTADMIN="${HOSTADMIN:-root@${DOMAINNAME:-$HOSTNAME}}"
@@ -119,21 +117,20 @@ LOCAL_BIN_DIR="${LOCAL_BIN_DIR:-/usr/local/bin}"
 DEFAULT_DATA_DIR="${DEFAULT_DATA_DIR:-/usr/local/share/template-files/data}"
 DEFAULT_CONF_DIR="${DEFAULT_CONF_DIR:-/usr/local/share/template-files/config}"
 DEFAULT_TEMPLATE_DIR="${DEFAULT_TEMPLATE_DIR:-/usr/local/share/template-files/defaults}"
-CONTAINER_IP_ADDRESS="$(__get_ip4)"
+CONTAINER_IP4_ADDRESS="$(__get_ip4)"
 CONTAINER_IP6_ADDRESS="$(__get_ip6)"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Additional variables and variable overrides
-SERVICE_NAME="docker-registry"
-SERVICES_LIST="docker-registry "
+SERVICE_NAME="registry"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Overwrite variables
-[ -n "$PORT" ] || PORT="5000"
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Show start message
 ENTRYPOINT_MESSAGE="false"
 echo "Executing entrypoint script for $SERVICE_NAME"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-[ "$SERVICE_PORT" = "443" ] && SSL_ENABLED="true"
+[ "$WEB_SERVER_PORT" = "443" ] && SSL_ENABLED="true"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Check if this is a new container
 [ -f "/tmp/entrypoint.pid" ] && START_SERVICES=""
@@ -143,13 +140,13 @@ echo "Executing entrypoint script for $SERVICE_NAME"
 # export variables
 export USER LANG TZ DOMAINNAME HOSTNAME HOSTADMIN SSL_ENABLED SSL_DIR SSL_CA
 export SSL_KEY SERVICE_NAME SSL_DIR LOCAL_BIN_DIR SSL_CONTAINER_DIR SSL_CERT_BOT
-export DEFAULT_CONF_DIR CONTAINER_IP_ADDRESS DISPLAY CONFIG_DIR_INITIALIZED DATA_DIR_INITIALIZED
-export SERVICE_USER ENTRYPOINT_MESSAGE PHP_VERSION SERVICES_LIST FULL_DOMAIN_NAME PORT
+export DEFAULT_CONF_DIR CONTAINER_IP4_CONTAINER_IP6_ADDRESS ADDRESS DISPLAY
+export CONFIG_DIR_INITIALIZED DATA_DIR_INITIALIZED SERVICE_USER ENTRYPOINT_MESSAGE
+export WEB_SERVER_PORTS PHP_VERSION SERVICES_LIST FULL_DOMAIN_NAME DEBUGGER
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # import variables from file
 [ -f "/root/env.sh" ] && . "/root/env.sh"
 [ -f "/config/env.sh" ] && . "/config/env.sh"
-[ -f "/config/.env.sh" ] && . "/config/.env.sh"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set timezone
 [ -n "$TZ" ] && [ -w "/etc/timezone" ] && echo "$TZ" >"/etc/timezone"
@@ -161,20 +158,20 @@ if [ -w "/etc/hosts" ] && ! grep -q '127.0.0.1' /etc/hosts; then
 fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set containers hostname
-[ -n "$HOSTNAME" ] && echo "$HOSTNAME" >"/etc/hostname"
+[ -n "$HOSTNAME" ] && [ -w "/etc/timezone" ] && echo "$HOSTNAME" >"/etc/hostname"
 if [ -w "/etc/hosts" ] && [ -n "$HOSTNAME" ]; then
-  echo "${CONTAINER_IP_ADDRESS:-127.0.0.1}    $HOSTNAME $HOSTNAME.local" >>"/etc/hosts"
+  echo "${CONTAINER_IP4_ADDRESS:-127.0.0.1}    $HOSTNAME $HOSTNAME.local" >>"/etc/hosts"
 fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Add domain to hosts file
-[ -n "$DOMAINNAME" ] && echo "$HOSTNAME.${DOMAINNAME:-local}" >"/etc/hostname"
+[ -n "$DOMAINNAME" ] && [ -w "/etc/timezone" ] && echo "$HOSTNAME.${DOMAINNAME:-local}" >"/etc/hostname"
 if [ -w "/etc/hosts" ] && [ -n "$DOMAINNAME" ]; then
-  echo "${CONTAINER_IP_ADDRESS:-127.0.0.1}    $HOSTNAME.${DOMAINNAME:-local}" >"/etc/hosts"
-  echo "${CONTAINER_IP_ADDRESS:-127.0.0.1}    $HOSTNAME.$DOMAINNAME" >>"/etc/hosts"
+  echo "${CONTAINER_IP4_ADDRESS:-127.0.0.1}    $HOSTNAME.${DOMAINNAME:-local}" >"/etc/hosts"
+  echo "${CONTAINER_IP4_ADDRESS:-127.0.0.1}    $HOSTNAME.$DOMAINNAME" >>"/etc/hosts"
 fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # import hosts file into container
-[ -f "/usr/local/etc/hosts" ] && cat "/usr/local/etc/hosts" >>"/etc/hosts"
+[ -f "/usr/local/etc/hosts" ] && [ -w "/etc/hosts" ] && cat "/usr/local/etc/hosts" >>"/etc/hosts"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Delete any gitkeep files
 [ -d "/data" ] && rm -Rf "/data/.gitkeep" "/data"/*/*.gitkeep
@@ -310,11 +307,21 @@ unset create_data create_data_name create_config create_config_name create_conf 
 [ -f "/data/.docker_has_run" ] || { [ -d "/data" ] && echo "Initialized on: $(date)" >"/data/.docker_has_run"; }
 [ -f "/config/.docker_has_run" ] || { [ -d "/config" ] && echo "Initialized on: $(date)" >"/config/.docker_has_run"; }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Actions based on env
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Additional commands
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Show message
-echo "Container ip address is: $CONTAINER_IP_ADDRESS"
+echo "Container ip address is: $CONTAINER_IP4_ADDRESS"
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Just start services
+if [ -n "$START_SERVICES" ]; then
+  __start_all_services
+  wait -f $!
+  exit $?
+fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 case "$1" in
 --help) # Help message
@@ -326,8 +333,8 @@ case "$1" in
   ;;
 
 healthcheck) # Docker healthcheck
-  __heath_check || exitCode=10
-  exit ${exitCode:-$?}
+  __heath_check
+  exit $?
   ;;
 
 ports)
@@ -345,7 +352,7 @@ procs)
 */bin/sh | */bin/bash | bash | shell | sh) # Launch shell
   shift 1
   __exec_command "${@:-/bin/bash}"
-  exit ${exitCode:-$?}
+  exit $?
   ;;
 
 certbot)
@@ -360,28 +367,27 @@ certbot)
   else
     __exec_command "certbot" "$@"
   fi
+  exit $?
   ;;
 
-start)
-  shift $#
-  __start_all_services &
-  wait -f $!
+exec)
+  shift 1
+  __exec_command "${@:-bash}"
   exit $?
   ;;
 
 *) # Execute primary command
-  if [ "$DATA_DIR_INITIALIZED" = "false" ] || [ -n "$STAR_SERVICES" ] || [ $# -eq 0 ]; then
-    exec "$0"
+  if [ $# -eq 0 ]; then
+    __start_all_services
     exit $?
   else
     __exec_command "$@"
-    exitCode=$?
+    exit $?
   fi
   ;;
 esac
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # end of entrypoint
-exit ${exitCode:-$?}
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 # ex: ts=2 sw=2 et filetype=sh
