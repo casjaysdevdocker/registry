@@ -70,10 +70,9 @@ RUN set -ex; \
   apk update --update-cache && apk add --no-cache ${PACK_LIST}
 
 RUN mkdir -p "/config/registry" "/data/registry" ; \
-  [ -d "/etc/docker-registry" ] && rm -Rf "/etc/docker-registry" ; \
-  ln -sf "/data/registry" "/var/lib/registry" ; \
+  [ -d "/etc/docker-registry" ] && rm -Rf "/etc/docker-registry"/* ; \
   ln -sf "/config/registry" "/etc/docker-registry" ; \
-  ln -sf "$(type -P docker-registry)" "/usr/local/bin/registry"
+  ln -sf "$(type -P docker-registry)" "/usr/bin/registry"
 
 RUN echo "$TIMEZONE" >"/etc/timezone" ; \
   touch "/etc/profile" "/root/.profile" ; \
