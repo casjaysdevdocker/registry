@@ -2,7 +2,7 @@
 ARG LICENSE="MIT"
 ARG IMAGE_NAME="registry"
 ARG PHP_SERVER="registry"
-ARG BUILD_DATE="Tue Feb 28 06:12:11 PM EST 2023"
+ARG BUILD_DATE="Tue Feb 28 08:46:34 PM EST 2023"
 ARG LANGUAGE="en_US.UTF-8"
 ARG TIMEZONE="America/New_York"
 ARG DEFAULT_DATA_DIR="/usr/local/share/template-files/data"
