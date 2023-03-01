@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-##@Version           :  202302282046-git
+##@Version           :  202302282130-git
 # @@Author           :  Jason Hempstead
 # @@Contact          :  jason@casjaysdev.com
 # @@License          :  WTFPL
 # @@ReadME           :  start-registry.sh --help
 # @@Copyright        :  Copyright: (c) 2023 Jason Hempstead, Casjays Developments
-# @@Created          :  Tuesday, Feb 28, 2023 20:46 EST
+# @@Created          :  Tuesday, Feb 28, 2023 21:30 EST
 # @@File             :  start-registry.sh
 # @@Description      :  script to start registry
 # @@Changelog        :  New script
@@ -173,13 +173,13 @@ fi
 [ -f "/config/env.sh" ] && . "/config/env.sh"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Actions based on env
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Post copy commands
 if [ -f "/config/registry/config.yml" ]; then
   [ -n "$PORT" ] && sed -i 's|:5000|:'$PORT'|g' "/config/registry/config.yml"
   [ -n "$REGISTRY_HOST" ] && sed -i 's|myregistryaddress.org|'$REGISTRY_HOST'|g' "/config/registry/config.yml"
 fi
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Post copy commands
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Other commands
 
