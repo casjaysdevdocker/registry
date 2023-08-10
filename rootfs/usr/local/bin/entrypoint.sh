@@ -3,7 +3,7 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ##@Version           :  202302282130-git
 # @@Author           :  Jason Hempstead
-# @@Contact          :  jason@casjaysdev.com
+# @@Contact          :  jason@casjaysdev.pro
 # @@License          :  WTFPL
 # @@ReadME           :  entrypoint.sh --help
 # @@Copyright        :  Copyright: (c) 2023 Jason Hempstead, Casjays Developments
@@ -123,7 +123,7 @@ FULL_DOMAIN_NAME="${FULL_DOMAIN_NAME:-$DOMAINNAME}"
 HOSTNAME="${HOSTNAME:-casjaysdev-registry}"
 HOSTADMIN="${HOSTADMIN:-root@${EMAIL_DOMAIN:-$DOMAINNAME}}"
 EMAIL_RELAY="${EMAIL_RELAY:-}"
-CERT_BOT_MAIL="${CERT_BOT_MAIL:-certbot-mail@casjay.net}"
+CERT_BOT_MAIL="${CERT_BOT_MAIL:-certbot-mail@casjay.pro}"
 SSL_CERT_BOT="${SSL_CERT_BOT:-false}"
 SSL_ENABLED="${SSL_ENABLED:-false}"
 SSL_DIR="${SSL_DIR:-/config/ssl}"
